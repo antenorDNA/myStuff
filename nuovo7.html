@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Lavorativo Collaborativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Librerie per esportazione -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .calendar-day {
+            min-height: 90px;
+        }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .calendar-day {
+                min-height: 120px;
+            }
+        }
+        /* Stile per la scrollbar del modal */
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased">
+    <div class="container mx-auto p-2 sm:p-4 md:p-8">
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-4">
+            <h1 class="text-2xl sm:text-3xl font-bold text-center text-indigo-600 mb-2">Calendario Lavorativo Collaborativo</h1>
+            <p class="text-center text-gray-500">Pianifica e monitora le tue ore di lavoro con semplicità.</p>
+        </div>
+        
+        <!-- Sezione Condivisione -->
+        <div class="bg-white rounded-xl shadow-lg p-5 mb-8">
+            <h3 class="font-bold text-lg text-gray-700 mb-4">Condivisione e Collaborazione</h3>
+            <div class="grid md:grid-cols-2 gap-4 md:gap-6 items-start">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Il Tuo ID Utente Unico (da condividere)</label>
+                    <div class="flex">
+                        <input type="text" id="current-user-id" readonly class="w-full p-2 border border-gray-300 rounded-l-md bg-gray-100 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <button id="copy-user-id" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-r-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">Copia</button>
+                    </div>
+                </div>
+                <div>
+                    <label for="collaborator-id-input" class="block text-sm font-medium text-gray-700 mb-1">Carica Calendario di un Altro Utente</label>
+                    <div class="flex">
+                        <input type="text" id="collaborator-id-input" placeholder="Incolla ID utente qui..." class="w-full p-2 border border-gray-300 rounded-l-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <button id="load-collaborator-calendar" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">Carica</button>
+                    </div>
+                </div>
+            </div>
+            <p id="currently-viewing" class="text-center text-sm text-gray-500 mt-4"></p>
+        </div>
+        
+        <!-- Sezione Pianificazione Intelligente -->
+        <div class="bg-white rounded-xl shadow-lg p-5 mb-8">
+            <h3 class="font-bold text-lg text-gray-700 mb-2">✨ Pianificazione Intelligente</h3>
+            <p class="text-sm text-gray-500 mb-4">Descrivi la tua settimana lavorativa e lascia che l'IA la pianifichi per te. Esempio: "Lunedì e martedì mattina a Borgo con Mila, venerdì pomeriggio a Monte due Torri".</p>
+            <div>
+                <textarea id="ai-planner-prompt" rows="3" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Scrivi qui il tuo piano..."></textarea>
+                <button id="ai-planner-btn" class="mt-2 w-full px-4 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all flex items-center justify-center">
+                    <span id="ai-planner-btn-text">Pianifica la mia Settimana</span>
+                    <div id="ai-planner-loader" class="loader w-5 h-5 border-t-white border-2 ml-2 hidden"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sezione Legenda -->
+        <div class="flex flex-wrap justify-center items-center gap-x-2 sm:gap-x-4 gap-y-2 mb-6 text-sm text-gray-600 bg-white p-3 rounded-xl shadow-md">
+            <h4 class="font-semibold mr-4">Legenda:</h4>
+            <div class="flex items-center">
+                <span class="w-4 h-4 rounded-full bg-green-100 mr-2 border border-green-200"></span>
+                <span>Borgo con Mila</span>
+            </div>
+            <div class="flex items-center">
+                <span class="w-4 h-4 rounded-full bg-orange-100 mr-2 border border-orange-200"></span>
+                <span>Monte due Torri</span>
+            </div>
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.828 14.828a4 4
+ 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Riposo</span>
+            </div>
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-500 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <span>Mattina</span>
+            </div>
+             <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-700 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                </svg>
+                <span>Pomeriggio</span>
+            </div>
+        </div>
+        <!-- Sezione Calendario -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <!-- Header Calendario -->
+            <div class="flex items-center justify-between mb-4">
+                <button id="prev-month" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 id="month-year" class="text-lg sm:text-xl md:text-2xl font-bold text-center"></h2>
+                <button id="next-month" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+            <!-- Giorni della settimana -->
+            <div class="calendar-grid mb-2">
+                <div class="text-center font-semibold text-gray-500 text-xs">L</div>
+                <div class="text-center font-semibold text-gray-500 text-xs">M</div>
+                <div class="text-center font-semibold text-gray-500 text-xs">M</div>
+                <div class="text-center font-semibold text-gray-500 text-xs">G</div>
+                <div class="text-center font-semibold text-gray-500 text-xs">V</div>
+                <div class="text-center font-semibold text-gray-500 text-xs">S</div>
+                <div class="text-center font-semibold text-gray-500 text-xs">D</div>
+            </div>
+            <!-- Griglia Calendario -->
+            <div id="calendar-grid" class="calendar-grid"></div>
+        </div>
+        <!-- Sezione Riepiloghi -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl shadow-md p-5">
+                 <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-lg text-gray-700">Riepilogo Mensile</h3>
+                    <button id="ai-summary-btn" title="Genera Riepilogo Intelligente" class="p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" transform="rotate(45 10 10) scale(0.8)"/><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a8 8 0 1116 0 8 8 0 01-16 0z" /></svg>
+                    </button>
+                </div>
+                <div class="flex justify-between items-center text-gray-600">
+                    <span>Ore Pianificate:</span>
+                    <span id="monthly-planned" class="font-bold text-xl text-blue-500">0</span>
+                </div>
+                <div class="flex justify-between items-center mt-1 text-gray-600">
+                    <span>Ore Effettive:</span>
+                    <span id="monthly-actual" class="font-bold text-xl text-green-500">0</span>
+                </div>
+                <div class="flex justify-between items-center mt-1 text-gray-600">
+                    <span>Straordinari:</span>
+                    <span id="monthly-overtime" class="font-bold text-xl text-purple-500">0</span>
+                </div>
+                 <hr class="my-3 border-gray-200">
+                <div class="text-sm">
+                    <p class="font-semibold text-gray-500 mb-1">Dettaglio Sedi:</p>
+                    <div class="pl-2 space-y-2">
+                        <div>
+                            <p class="font-medium text-green-700">Borgo con Mila</p>
+                            <div class="flex justify-between items-center text-gray-600 text-xs pl-2">
+                                <span>Pianificate:</span>
+                                <span id="monthly-planned-bcm" class="font-bold text-blue-500">0.0</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-1 text-gray-600 text-xs pl-2">
+                                <span>Effettive:</span>
+                                <span id="monthly-actual-bcm" class="font-bold text-green-500">0.0</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="font-medium text-orange-700">Monte due Torri</p>
+                            <div class="flex justify-between items-center text-gray-600 text-xs pl-2">
+                                <span>Pianificate:</span>
+                                <span id="monthly-planned-mdt" class="font-bold text-blue-500">0.0</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-1 text-gray-600 text-xs pl-2">
+                                <span>Effettive:</span>
+                                <span id="monthly-actual-mdt" class="font-bold text-green-500">0.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <h3 class="font-bold text-lg text-gray-700 mb-2">Riepilogo Settimanale</h3>
+                <div class="flex justify-between items-center text-gray-600">
+                    <span>Ore Pianificate:</span>
+                    <span id="weekly-planned" class="font-bold text-xl text-blue-500">0</span>
+                </div>
+                <div class="flex justify-between items-center mt-1 text-gray-600">
+                    <span>Ore Effettive:</span>
+                    <span id="weekly-actual" class="font-bold text-xl text-green-500">0</span>
+                </div>
+                <div class="flex justify-between items-center mt-1 text-gray-600">
+                    <span>Straordinari:</span>
+                    <span id="weekly-overtime" class="font-bold text-xl text-purple-500">0</span>
+                </div>
+                 <hr class="my-3 border-gray-200">
+                <div class="text-sm">
+                    <p class="font-semibold text-gray-500 mb-1">Dettaglio Sedi:</p>
+                    <div class="pl-2 space-y-2">
+                        <div>
+                            <p class="font-medium text-green-700">Borgo con Mila</p>
+                            <div class="flex justify-between items-center text-gray-600 text-xs pl-2">
+                                <span>Pianificate:</span>
+                                <span id="weekly-planned-bcm" class="font-bold text-blue-500">0.0</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-1 text-gray-600 text-xs pl-2">
+                                <span>Effettive:</span>
+                                <span id="weekly-actual-bcm" class="font-bold text-green-500">0.0</span>
+                            </div>
+                        </div>
+                        <div>
+                             <p class="font-medium text-orange-700">Monte due Torri</p>
+                            <div class="flex justify-between items-center text-gray-600 text-xs pl-2">
+                                <span>Pianificate:</span>
+                                <span id="weekly-planned-mdt" class="font-bold text-blue-500">0.0</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-1 text-gray-600 text-xs pl-2">
+                                <span>Effettive:</span>
+                                <span id="weekly-actual-mdt" class="font-bold text-green-500">0.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label for="week-selector" class="block text-sm font-medium text-gray-700 mb-1">Seleziona Settimana</label>
+                    <input type="week" id="week-selector" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sezione Esporta Dati -->
+        <div class="bg-white rounded-xl shadow-md p-5 mt-6">
+            <h3 class="font-bold text-lg text-gray-700 mb-4">Esporta Dati per Report</h3>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div class="flex-grow">
+                    <label for="export-month" class="block text-sm font-medium text-gray-700 mb-1">Seleziona Mese</label>
+                    <input type="month" id="export-month" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="flex items-end space-x-3">
+                    <button id="export-excel" class="px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">Esporta Excel</button>
+                    <button id="export-pdf" class="px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">Esporta PDF</button>
+                </div>
+            </div>
+            <hr class="my-4 border-gray-200">
+            <h3 class="font-bold text-lg text-gray-700 mb-4">Backup e Ripristino</h3>
+            <p class="text-sm text-gray-500 mb-4">Salva una copia di tutti i tuoi dati o ripristina da un file di backup precedente. Utile per trasferire dati o per sicurezza.</p>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div class="flex-grow">
+                     <label for="import-file" class="block text-sm font-medium text-gray-700 mb-1">Importa da file di backup (.json)</label>
+                    <input type="file" id="import-file" accept=".json" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                </div>
+                <div class="flex items-end space-x-3">
+                     <button id="import-json" class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">Importa</button>
+                    <button id="export-json" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">Esporta Backup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modale per inserimento/modifica -->
+    <div id="entry-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-5 border-b">
+                <h3 id="modal-title" class="text-xl font-bold text-gray-800"></h3>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto modal-body">
+                <form id="entry-form">
+                    <input type="hidden" id="selected-date">
+                    
+                    <!-- Sezione Pianificazione -->
+                    <div id="planning-section">
+                        <h4 class="font-semibold text-lg mb-3 text-indigo-600">Pianificazione</h4>
+                        <div class="mb-4">
+                            <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Sede di lavoro</label>
+                            <select id="location" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <option>Borgo con Mila</option>
+                                <option>Monte due Torri</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo di giornata</label>
+                            <div class="flex space-x-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="day-type" value="work" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300" checked>
+                                    <span class="ml-2 text-gray-700">Lavoro</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="day-type" value="rest" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                                    <span class="ml-2 text-gray-700">Riposo</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-4" id="planned-hours-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Orario pianificato</label>
+                            <div class="grid grid-cols-2 gap-4 items-center">
+                                <input type="time" id="planned-start-time" step="1800" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <input type="time" id="planned-end-time" step="1800" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <p class="text-right text-sm text-gray-600 mt-1">Ore totali: <span id="planned-total" class="font-bold">0.0</span></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Divisore -->
+                    <hr id="modal-divider" class="my-6 border-gray-200">
+                    <!-- Sezione Consuntivo -->
+                    <div id="actual-section">
+                        <h4 class="font-semibold text-lg mb-3 text-green-600">Consuntivo</h4>
+                        <p class="text-sm text-gray-500 mb-4">Inserisci la fascia oraria che hai effettivamente lavorato.</p>
+                         <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Orario effettivo</label>
+                            <div class="grid grid-cols-2 gap-4 items-center">
+                                <input type="time" id="actual-start-time" step="1800" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                                <input type="time" id="actual-end-time" step="1800" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
+                            </div>
+                            <p class="text-right text-sm text-gray-600 mt-1">Ore totali: <span id="actual-total" class="font-bold">0.0</span></p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="flex justify-end items-center p-5 bg-gray-50 border-t rounded-b-xl space-x-3">
+                 <button id="delete-entry" type="button" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">Elimina</button>
+                 <button id="save-entry" type="submit" form="entry-form" class="px-6 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">Salva</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Riepilogo Intelligente -->
+    <div id="ai-summary-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-5 border-b">
+                <h3 class="text-xl font-bold text-gray-800">✨ Riepilogo Intelligente</h3>
+                <button id="close-ai-summary-modal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="ai-summary-content" class="p-6 overflow-y-auto modal-body prose max-w-none">
+                <!-- Contenuto generato dall'IA -->
+            </div>
+        </div>
+    </div>
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- CONFIGURAZIONE FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCwEsYPeM05c-pStlRm16n9UjN-v71i4nM",
+            authDomain: "test-766b3.firebaseapp.com",
+            projectId: "test-766b3",
+            storageBucket: "test-766b3.appspot.com", // CORRETTO!
+            messagingSenderId: "732686667162",
+            appId: "1:732686667162:web:4ad48461e0b0fb7e5ffe23",
+            measurementId: "G-VKPX8HKR7T"
+        };
+        // ----------------------------------------------------
+
+        // --- Inizializzazione Firebase ---
+        let app, auth, db;
+        let firebaseInitialized = false;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            firebaseInitialized = true;
+        } catch (e) {
+            console.error("Firebase initialization failed:", e);
+            // Mostra un errore dettagliato direttamente sulla pagina se l'inizializzazione fallisce
+            document.body.innerHTML = `<div class="p-8 text-center"><h1 class="text-2xl font-bold text-red-600">Errore di Inizializzazione Firebase</h1><p class="mt-2 text-gray-700">Impossibile avviare l'applicazione. Questo di solito è causato da un errore di copia-incolla nell'oggetto \`firebaseConfig\`.</p><p class="mt-4 text-left bg-red-50 p-4 rounded-lg font-mono text-sm text-red-800"><b>Dettagli Errore:</b><br>${e.message}</p><p class="mt-4 text-gray-600">Per favore, ricontrolla attentamente la configurazione nel file index.html e le impostazioni del tuo progetto Firebase.</p></div>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!firebaseInitialized) {
+                return;
+            }
+            // Elementi del DOM
+            const calendarGrid = document.getElementById('calendar-grid');
+            const monthYearEl = document.getElementById('month-year');
+            const prevMonthBtn = document.getElementById('prev-month');
+            const nextMonthBtn = document.getElementById('next-month');
+            
+            // ... (il resto del codice DOM è identico) ...
+            const modal = document.getElementById('entry-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const closeModalBtn = document.getElementById('close-modal');
+            const entryForm = document.getElementById('entry-form');
+            const selectedDateInput = document.getElementById('selected-date');
+            const locationSelect = document.getElementById('location');
+            const dayTypeRadios = document.querySelectorAll('input[name="day-type"]');
+            const plannedHoursContainer = document.getElementById('planned-hours-container');
+            const deleteBtn = document.getElementById('delete-entry');
+            const actualSection = document.getElementById('actual-section');
+            const modalDivider = document.getElementById('modal-divider');
+            
+            const plannedStartTimeInput = document.getElementById('planned-start-time');
+            const plannedEndTimeInput = document.getElementById('planned-end-time');
+            const plannedTotalEl = document.getElementById('planned-total');
+            const actualStartTimeInput = document.getElementById('actual-start-time');
+            const actualEndTimeInput = document.getElementById('actual-end-time');
+            const actualTotalEl = document.getElementById('actual-total');
+            // Riepiloghi
+            const monthlyPlannedEl = document.getElementById('monthly-planned');
+            const monthlyActualEl = document.getElementById('monthly-actual');
+            const monthlyOvertimeEl = document.getElementById('monthly-overtime');
+            const weeklyPlannedEl = document.getElementById('weekly-planned');
+            const weeklyActualEl = document.getElementById('weekly-actual');
+            const weeklyOvertimeEl = document.getElementById('weekly-overtime');
+            const weekSelector = document.getElementById('week-selector');
+            // Riepiloghi Dettaglio Sedi
+            const monthlyPlannedBcmEl = document.getElementById('monthly-planned-bcm');
+            const monthlyActualBcmEl = document.getElementById('monthly-actual-bcm');
+            const monthlyPlannedMdtEl = document.getElementById('monthly-planned-mdt');
+            const monthlyActualMdtEl = document.getElementById('monthly-actual-mdt');
+            const weeklyPlannedBcmEl = document.getElementById('weekly-planned-bcm');
+            const weeklyActualBcmEl = document.getElementById('weekly-actual-bcm');
+            const weeklyPlannedMdtEl = document.getElementById('weekly-planned-mdt');
+            const weeklyActualMdtEl = document.getElementById('weekly-actual-mdt');
+            // Esportazione
+            const exportMonthInput = document.getElementById('export-month');
+            const exportExcelBtn = document.getElementById('export-excel');
+            const exportPdfBtn = document.getElementById('export-pdf');
+            const exportJsonBtn = document.getElementById('export-json');
+            const importJsonBtn = document.getElementById('import-json');
+            const importFileInput = document.getElementById('import-file');
+
+            // Condivisione
+            const currentUserIdEl = document.getElementById('current-user-id');
+            const copyUserIdBtn = document.getElementById('copy-user-id');
+            const collaboratorIdInput = document.getElementById('collaborator-id-input');
+            const loadCollaboratorBtn = document.getElementById('load-collaborator-calendar');
+            const currentlyViewingEl = document.getElementById('currently-viewing');
+
+            // Gemini API Elements
+            const aiPlannerPrompt = document.getElementById('ai-planner-prompt');
+            const aiPlannerBtn = document.getElementById('ai-planner-btn');
+            const aiPlannerBtnText = document.getElementById('ai-planner-btn-text');
+            const aiPlannerLoader = document.getElementById('ai-planner-loader');
+            const aiSummaryBtn = document.getElementById('ai-summary-btn');
+            const aiSummaryModal = document.getElementById('ai-summary-modal');
+            const closeAiSummaryModalBtn = document.getElementById('close-ai-summary-modal');
+            const aiSummaryContent = document.getElementById('ai-summary-content');
+
+            // Stato dell'applicazione
+            let currentDate = new Date();
+            let workData = {};
+            let currentUserId = null;
+            let viewedUserId = null;
+            let unsubscribe;
+            let uiInitialized = false;
+            const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+            
+            // --- Gemini API Helper (Richiede la tua chiave API se non fornita dall'ambiente) ---
+            const geminiApiKey = ""; // Inserisci la tua chiave API Gemini qui se necessario
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
+
+            async function callGemini(payload, retries = 3, delay = 1000) {
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return await response.json();
+                    } catch (error) {
+                        console.error(`Attempt ${i + 1} failed:`, error);
+                        if (i < retries - 1) {
+                            await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
+                        } else {
+                           throw error;
+                        }
+                    }
+                }
+            }
+
+            // --- Logica di Autenticazione e Inizializzazione ---
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    currentUserIdEl.value = currentUserId;
+                    if (!viewedUserId) {
+                         viewedUserId = currentUserId;
+                         setupRealtimeListener(currentUserId);
+                    }
+                    if(!uiInitialized) {
+                        initializeAppUI();
+                        uiInitialized = true;
+                    }
+                } else {
+                   try {
+                        await signInAnonymously(auth);
+                    } catch (error) {
+                        console.error("Authentication failed:", error);
+                        // Mostra un errore di autenticazione più specifico
+                        currentlyViewingEl.textContent = `Autenticazione fallita: ${error.code}. Controlla i domini autorizzati e che l'accesso anonimo sia attivo su Firebase.`;
+                    }
+                }
+            });
+            
+            const setupRealtimeListener = (userIdToView) => {
+                if (unsubscribe) {
+                    unsubscribe();
+                }
+                viewedUserId = userIdToView;
+                const docRef = doc(db, "calendars", viewedUserId);
+                if (viewedUserId === currentUserId) {
+                    currentlyViewingEl.textContent = "Stai visualizzando il tuo calendario.";
+                } else {
+                    currentlyViewingEl.textContent = `Stai visualizzando il calendario di: ${viewedUserId}`;
+                }
+                unsubscribe = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        workData = docSnap.data().workData || {};
+                    } else {
+                        workData = {};
+                    }
+                    renderCalendar();
+                }, (error) => {
+                    console.error("Errore nel listener di Firestore: ", error);
+                    currentlyViewingEl.textContent = `Errore di Firestore: ${error.code}. Controlla le regole del database.`;
+                });
+            };
+
+            const calculateHours = (start, end) => {
+                if (!start || !end) return 0;
+                try {
+                    const [startHour, startMinute] = start.split(':').map(Number);
+                    const [endHour, endMinute] = end.split(':').map(Number);
+                    let startTimeInMinutes = startHour * 60 + startMinute;
+                    let endTimeInMinutes = endHour * 60 + endMinute;
+                    
+                    if (endTimeInMinutes < startTimeInMinutes) {
+                        endTimeInMinutes += 24 * 60;
+                    }
+                    return (endTimeInMinutes - startTimeInMinutes) / 60;
+                } catch (e) {
+                    return 0;
+                }
+            };
+            
+            const renderCalendar = () => {
+                if (!document.body.contains(calendarGrid)) return;
+                calendarGrid.innerHTML = '';
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                monthYearEl.textContent = `${monthNames[month]} ${year}`;
+                const firstDayOfMonth = new Date(year, month, 1);
+                const lastDayOfMonth = new Date(year, month + 1, 0);
+                const daysInMonth = lastDayOfMonth.getDate();
+                let dayOfWeek = firstDayOfMonth.getDay();
+                dayOfWeek = (dayOfWeek === 0) ? 6 : dayOfWeek - 1;
+                for (let i = 0; i < dayOfWeek; i++) {
+                    calendarGrid.appendChild(document.createElement('div'));
+                }
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayEl = document.createElement('div');
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    dayEl.className = 'calendar-day border border-gray-200 rounded-lg p-1 sm:p-2 flex flex-col cursor-pointer hover:bg-gray-100 transition-colors relative text-xs';
+                    dayEl.dataset.date = dateStr;
+                    const entry = workData[dateStr];
+                    let icon = '';
+                    if (entry && entry.isWorkDay && entry.plannedStartTime) {
+                        const startHour = parseInt(entry.plannedStartTime.split(':')[0], 10);
+                        if (startHour >= 7 && startHour < 13) {
+                            icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>`;
+                        } else if (startHour >= 13 && startHour < 19) {
+                            icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 text-indigo-700" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>`;
+                        }
+                    }
+                    let dayHeader = `<div class="flex items-center mb-1"><span class="font-bold text-gray-700 text-sm sm:text-base">${day}</span>${icon ? `<div class="ml-1">${icon}</div>` : ''}</div>`;
+                    let dayDetails = '';
+                    if (entry) {
+                        dayEl.classList.remove('hover:bg-gray-100');
+                        if (entry.isWorkDay) {
+                           dayEl.classList.add(entry.location === 'Borgo con Mila' ? 'bg-green-100' : 'bg-orange-100');
+                           const locationShort = entry.location === 'Borgo con Mila' ? 'BCM' : 'MDT';
+                           dayDetails += `<div class="space-y-1 text-gray-600 flex-grow text-[10px] sm:text-xs"><div class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-center font-semibold text-[9px] sm:text-[10px]">${locationShort}</div>`;
+                            if (entry.plannedHours > 0) {
+                                dayDetails += `<div class="text-blue-600">P: ${entry.plannedStartTime}-${entry.plannedEndTime} <strong>(${entry.plannedHours.toFixed(1)}h)</strong></div>`;
+                            }
+                            if (entry.actualHours > 0) {
+                                const overtime = entry.actualHours - (entry.plannedHours || 0);
+                                dayDetails += `<div class="text-green-600">E: ${entry.actualStartTime}-${entry.actualEndTime} <strong>(${entry.actualHours.toFixed(1)}h)</strong></div>`;
+                                if(overtime > 0) dayDetails += `<div class="text-purple-600">S: <strong>+${overtime.toFixed(1)}h</strong></div>`;
+                            }
+                           dayDetails += `</div>`;
+                        } else {
+                            dayEl.classList.add('bg-slate-200', 'text-gray-500');
+                            dayDetails += `<div class="text-center text-sm font-semibold flex-grow flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>`;
+                        }
+                    }
+                    
+                    dayEl.innerHTML = dayHeader + dayDetails;
+                    
+                    const today = new Date();
+                    if(year === today.getFullYear() && month === today.getMonth() && day === today.getDate()){
+                       const daySpan = dayEl.querySelector('span.font-bold');
+                       if (daySpan) daySpan.classList.add('bg-indigo-600', 'text-white', 'rounded-full', 'w-7', 'h-7', 'flex', 'items-center', 'justify-center');
+                    }
+                    dayEl.addEventListener('click', () => openModal(dateStr));
+                    calendarGrid.appendChild(dayEl);
+                }
+                updateSummaries();
+            };
+            
+            const openModal = (dateStr) => {
+                selectedDateInput.value = dateStr;
+                const date = new Date(dateStr + 'T00:00:00');
+                modalTitle.textContent = `Gestisci ${date.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+                const clickedDate = new Date(dateStr + 'T00:00:00');
+                const week = getISOWeek(clickedDate);
+                const year = clickedDate.getFullYear();
+                const correctYear = (clickedDate.getMonth() === 11 && week === 1) ? year + 1 : (clickedDate.getMonth() === 0 && week > 50) ? year - 1 : year;
+                weekSelector.value = `${correctYear}-W${String(week).padStart(2, '0')}`;
+                updateWeeklySummaryFromSelector();
+                entryForm.reset();
+                plannedTotalEl.textContent = '0.0';
+                actualTotalEl.textContent = '0.0';
+                const entry = workData[dateStr];
+                if(entry) {
+                    locationSelect.value = entry.location;
+                    document.querySelector(`input[name="day-type"][value="${entry.isWorkDay ? 'work' : 'rest'}"]`).checked = true;
+                    plannedStartTimeInput.value = entry.plannedStartTime || '';
+                    plannedEndTimeInput.value = entry.plannedEndTime || '';
+                    actualStartTimeInput.value = entry.actualStartTime || '';
+                    actualEndTimeInput.value = entry.actualEndTime || '';
+                    if (entry.isWorkDay && entry.plannedStartTime && entry.plannedEndTime && !entry.actualStartTime && !entry.actualEndTime) {
+                        actualStartTimeInput.value = entry.plannedStartTime;
+                        actualEndTimeInput.value = entry.plannedEndTime;
+                    }
+                    actualSection.classList.toggle('hidden', !entry.isWorkDay);
+                    modalDivider.classList.toggle('hidden', !entry.isWorkDay);
+                    deleteBtn.classList.remove('hidden');
+                } else {
+                    actualSection.classList.add('hidden');
+                    modalDivider.classList.add('hidden');
+                    deleteBtn.classList.add('hidden');
+                    document.querySelector('input[name="day-type"][value="work"]').checked = true;
+                }
+                
+                togglePlannedHoursVisibility();
+                updateTotalHoursDisplay();
+                modal.classList.remove('hidden');
+            };
+            const closeModal = () => modal.classList.add('hidden');
+            const saveEntry = async (e) => {
+                e.preventDefault();
+                const dateStr = selectedDateInput.value;
+                const isWorkDay = document.querySelector('input[name="day-type"]:checked').value === 'work';
+                const newEntryData = {};
+                if (isWorkDay) {
+                     const plannedStart = plannedStartTimeInput.value;
+                     const plannedEnd = plannedEndTimeInput.value;
+                     const actualStart = actualStartTimeInput.value;
+                     const actualEnd = actualEndTimeInput.value;
+                     const plannedHours = calculateHours(plannedStart, plannedEnd);
+                     const actualHours = calculateHours(actualStart, actualEnd);
+                     if (plannedHours <= 0) {
+                         alert('Per favore, inserisci una fascia oraria pianificata valida.');
+                         return;
+                     }
+                    
+                    newEntryData[dateStr] = {
+                        location: locationSelect.value, isWorkDay: true, plannedStartTime: plannedStart,
+                        plannedEndTime: plannedEnd, plannedHours: plannedHours, actualStartTime: actualStart,
+                        actualEndTime: actualEnd, actualHours: actualHours,
+                    };
+                } else {
+                    newEntryData[dateStr] = { isWorkDay: false, location: null, plannedHours: 0, actualHours: 0 };
+                }
+                
+                try {
+                    const docRef = doc(db, "calendars", viewedUserId);
+                    await setDoc(docRef, { workData: { ...workData, ...newEntryData } }, { merge: true });
+                } catch (error) {
+                    console.error("Errore nel salvataggio dei dati su Firestore: ", error);
+                    alert("Impossibile salvare i dati. Controlla la connessione e riprova.");
+                }
+                
+                closeModal();
+            };
+            
+            const deleteEntry = async () => {
+                const dateStr = selectedDateInput.value;
+                const updatedWorkData = { ...workData };
+                delete updatedWorkData[dateStr];
+                try {
+                    const docRef = doc(db, "calendars", viewedUserId);
+                    await setDoc(docRef, { workData: updatedWorkData });
+                } catch (error) {
+                    console.error("Errore nell'eliminazione dei dati su Firestore: ", error);
+                    alert("Impossibile eliminare i dati. Controlla la connessione e riprova.");
+                }
+                closeModal();
+            };
+            
+            const togglePlannedHoursVisibility = () => {
+                const isWorkDay = document.querySelector('input[name="day-type"]:checked').value === 'work';
+                plannedHoursContainer.style.display = isWorkDay ? 'block' : 'none';
+                actualSection.classList.toggle('hidden', !isWorkDay);
+                modalDivider.classList.toggle('hidden', !isWorkDay);
+            };
+            const updateTotalHoursDisplay = () => {
+                plannedTotalEl.textContent = calculateHours(plannedStartTimeInput.value, plannedEndTimeInput.value).toFixed(1);
+                actualTotalEl.textContent = calculateHours(actualStartTimeInput.value, actualEndTimeInput.value).toFixed(1);
+            }
+            const updateSummaries = () => {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                
+                let mPlanned = 0, mActual = 0, mPlannedBCM = 0, mActualBCM = 0, mPlannedMDT = 0, mActualMDT = 0;
+                Object.keys(workData).forEach(dateStr => {
+                    const entryDate = new Date(dateStr + 'T00:00:00');
+                    if(entryDate.getFullYear() === year && entryDate.getMonth() === month) {
+                        const entry = workData[dateStr];
+                        if(entry.isWorkDay) {
+                           mPlanned += entry.plannedHours || 0;
+                           mActual += entry.actualHours || 0;
+                           if (entry.location === 'Borgo con Mila') { mPlannedBCM += entry.plannedHours || 0; mActualBCM += entry.actualHours || 0; } 
+                           else if (entry.location === 'Monte due Torri') { mPlannedMDT += entry.plannedHours || 0; mActualMDT += entry.actualHours || 0; }
+                        }
+                    }
+                });
+                
+                monthlyPlannedEl.textContent = mPlanned.toFixed(1);
+                monthlyActualEl.textContent = mActual.toFixed(1);
+                monthlyOvertimeEl.textContent = Math.max(0, mActual - mPlanned).toFixed(1);
+                monthlyPlannedBcmEl.textContent = mPlannedBCM.toFixed(1);
+                monthlyActualBcmEl.textContent = mActualBCM.toFixed(1);
+                monthlyPlannedMdtEl.textContent = mPlannedMDT.toFixed(1);
+                monthlyActualMdtEl.textContent = mActualMDT.toFixed(1);
+                updateWeeklySummaryFromSelector();
+            };
+            const updateWeeklySummaryFromSelector = () => {
+                const weekValue = weekSelector.value;
+                if (!weekValue) { return; }
+                const [year, week] = weekValue.split('-W').map(Number);
+                const { startOfWeek, endOfWeek } = getWeekRangeFromISOWeek(year, week);
+                
+                let wPlanned = 0, wActual = 0, wPlannedBCM = 0, wActualBCM = 0, wPlannedMDT = 0, wActualMDT = 0;
+                 for (let d = new Date(startOfWeek); d <= endOfWeek; d.setDate(d.getDate() + 1)) {
+                    const currentDayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                    const entry = workData[currentDayStr];
+                    if(entry && entry.isWorkDay) {
+                        wPlanned += entry.plannedHours || 0;
+                        wActual += entry.actualHours || 0;
+                        if (entry.location === 'Borgo con Mila') { wPlannedBCM += entry.plannedHours || 0; wActualBCM += entry.actualHours || 0; } 
+                        else if (entry.location === 'Monte due Torri') { wPlannedMDT += entry.plannedHours || 0; wActualMDT += entry.actualHours || 0; }
+                    }
+                 }
+                weeklyPlannedEl.textContent = wPlanned.toFixed(1);
+                weeklyActualEl.textContent = wActual.toFixed(1);
+                weeklyOvertimeEl.textContent = Math.max(0, wActual - wPlanned).toFixed(1);
+                weeklyPlannedBcmEl.textContent = wPlannedBCM.toFixed(1);
+                weeklyActualBcmEl.textContent = wActualBCM.toFixed(1);
+                weeklyPlannedMdtEl.textContent = wPlannedMDT.toFixed(1);
+                weeklyActualMdtEl.textContent = wActualMDT.toFixed(1);
+            };
+            const getWeekRangeFromISOWeek = (year, week) => {
+                const d = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+                const day = d.getUTCDay() || 7;
+                d.setUTCDate(d.getUTCDate() + 1 - day);
+                const startOfWeek = new Date(d);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(endOfWeek.getDate() + 6);
+                return { startOfWeek, endOfWeek };
+            };
+            
+            const getISOWeek = (date) => {
+                const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+                const dayNum = d.getUTCDay() || 7;
+                d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+                const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+                return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            }
+            const snapTo30MinuteInterval = (timeString) => {
+                if (!timeString) return '';
+                try {
+                    const [hours, minutes] = timeString.split(':').map(Number);
+                    const totalMinutes = hours * 60 + minutes;
+                    const snappedTotalMinutes = Math.round(totalMinutes / 30) * 30;
+                    const snappedHours = Math.floor(snappedTotalMinutes / 60) % 24;
+                    const snappedMinutes = snappedTotalMinutes % 60;
+                    return `${String(snappedHours).padStart(2, '0')}:${String(snappedMinutes).padStart(2, '0')}`;
+                } catch (e) {
+                    console.error("Could not snap time:", timeString, e);
+                    return timeString;
+                }
+            };
+            
+            const getExportDataForMonth = (year, month) => {
+                let mPlanned = 0, mActual = 0, mPlannedBCM = 0, mActualBCM = 0, mPlannedMDT = 0, mActualMDT = 0;
+                const tableData = [];
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const entry = workData[dateStr];
+                    const row = {
+                        "Data": new Date(dateStr + 'T00:00:00').toLocaleDateString('it-IT'), "Giorno": new Date(dateStr + 'T00:00:00').toLocaleDateString('it-IT', { weekday: 'short' }),
+                        "Tipo": "N/D", "Sede": "-", "Orario Pianificato": "-", "Ore Pianificate": 0, "Orario Effettivo": "-", "Ore Effettive": 0
+                    };
+                    
+                    if(entry) {
+                        if (entry.isWorkDay) {
+                            row["Tipo"] = "Lavoro"; row["Sede"] = entry.location;
+                            row["Orario Pianificato"] = entry.plannedStartTime && entry.plannedEndTime ? `${entry.plannedStartTime}-${entry.plannedEndTime}` : "-";
+                            row["Ore Pianificate"] = entry.plannedHours || 0;
+                            row["Orario Effettivo"] = entry.actualStartTime && entry.actualEndTime ? `${entry.actualStartTime}-${entry.actualEndTime}` : "-";
+                            row["Ore Effettive"] = entry.actualHours || 0;
+                            
+                           mPlanned += entry.plannedHours || 0; mActual += entry.actualHours || 0;
+                           if (entry.location === 'Borgo con Mila') { mPlannedBCM += entry.plannedHours || 0; mActualBCM += entry.actualHours || 0; } 
+                           else if (entry.location === 'Monte due Torri') { mPlannedMDT += entry.plannedHours || 0; mActualMDT += entry.actualHours || 0; }
+                        } else { row["Tipo"] = "Riposo"; }
+                    }
+                    tableData.push(row);
+                }
+                const mOvertime = Math.max(0, mActual - mPlanned);
+                const summaries = { mPlanned, mActual, mOvertime, mPlannedBCM, mActualBCM, mPlannedMDT, mActualMDT };
+                return { tableData, summaries };
+            };
+            
+            const exportToPDF = () => {
+                const monthValue = exportMonthInput.value;
+                if (!monthValue) { alert("Per favore, seleziona un mese da esportare."); return; }
+                const [year, month] = monthValue.split('-').map(Number);
+                const { tableData, summaries } = getExportDataForMonth(year, month - 1);
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setFontSize(18);
+                doc.text(`Riepilogo Lavorativo - ${monthNames[month - 1]} ${year}`, 14, 22);
+                doc.setFontSize(11);
+                doc.setTextColor(100);
+                const summaryText = `Riepilogo Totale:\n- Ore Pianificate: ${summaries.mPlanned.toFixed(1)}\n- Ore Effettive: ${summaries.mActual.toFixed(1)}\n- Straordinari: ${summaries.mOvertime.toFixed(1)}\n\nDettaglio Sedi:\n- Borgo con Mila:\n    - Pianificate: ${summaries.mPlannedBCM.toFixed(1)}\n    - Effettive: ${summaries.mActualBCM.toFixed(1)}\n- Monte due Torri:\n    - Pianificate: ${summaries.mPlannedMDT.toFixed(1)}\n    - Effettive: ${summaries.mActualMDT.toFixed(1)}`;
+                doc.text(summaryText, 14, 32);
+                const head = [["Data", "Giorno", "Tipo", "Sede", "Pianificato", "Ore P.", "Effettivo", "Ore E."]];
+                const body = tableData.map(r => [r.Data, r.Giorno, r.Tipo, r.Sede, r["Orario Pianificato"], r["Ore Pianificate"].toFixed(1), r["Orario Effettivo"], r["Ore Effettive"].toFixed(1)]);
+                doc.autoTable({ head, body, startY: 85, theme: 'striped', headStyles: { fillColor: [41, 128, 185] } });
+                doc.save(`Riepilogo_${monthNames[month-1]}_${year}.pdf`);
+            };
+             const exportToExcel = () => {
+                const monthValue = exportMonthInput.value;
+                if (!monthValue) { alert("Per favore, seleziona un mese da esportare."); return; }
+                const [year, month] = monthValue.split('-').map(Number);
+                const { tableData, summaries } = getExportDataForMonth(year, month - 1);
+                const ws = XLSX.utils.json_to_sheet([]);
+                XLSX.utils.sheet_add_aoa(ws, [["Riepilogo Mensile", `${monthNames[month-1]} ${year}`]], { origin: "A1" });
+                XLSX.utils.sheet_add_aoa(ws, [["Ore Pianificate", summaries.mPlanned.toFixed(1)]], { origin: "A3" });
+                XLSX.utils.sheet_add_aoa(ws, [["Ore Effettive", summaries.mActual.toFixed(1)]], { origin: "A4" });
+                XLSX.utils.sheet_add_aoa(ws, [["Straordinari", summaries.mOvertime.toFixed(1)]], { origin: "A5" });
+                XLSX.utils.sheet_add_aoa(ws, [["Dettaglio Sedi"]], { origin: "D3" });
+                XLSX.utils.sheet_add_aoa(ws, [["Borgo con Mila (Pian.)", summaries.mPlannedBCM.toFixed(1)]], { origin: "D4" });
+                XLSX.utils.sheet_add_aoa(ws, [["Borgo con Mila (Eff.)", summaries.mActualBCM.toFixed(1)]], { origin: "D5" });
+                XLSX.utils.sheet_add_aoa(ws, [["Monte due Torri (Pian.)", summaries.mPlannedMDT.toFixed(1)]], { origin: "D6" });
+                XLSX.utils.sheet_add_aoa(ws, [["Monte due Torri (Eff.)", summaries.mActualMDT.toFixed(1)]], { origin: "D7" });
+                XLSX.utils.sheet_add_json(ws, tableData, { origin: "A10" });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Riepilogo Mensile");
+                XLSX.writeFile(wb, `Riepilogo_${monthNames[month-1]}_${year}.xlsx`);
+            };
+            
+            const exportToJSON = () => {
+                if (Object.keys(workData).length === 0) {
+                    alert("Non ci sono dati da esportare.");
+                    return;
+                }
+                const dataStr = JSON.stringify(workData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: "application/json"});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                const date = new Date().toISOString().slice(0, 10);
+                link.download = `calendario_backup_${date}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            };
+
+            const importFromJSON = () => {
+                const file = importFileInput.files[0];
+                if (!file) {
+                    alert("Per favore, seleziona un file da importare.");
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (typeof importedData !== 'object' || importedData === null || Array.isArray(importedData)) {
+                            throw new Error("Il file non contiene dati validi.");
+                        }
+                        const docRef = doc(db, "calendars", viewedUserId);
+                        await setDoc(docRef, { workData: importedData });
+                        importFileInput.value = '';
+                        alert("Dati importati con successo! Il calendario si aggiornerà a breve.");
+                    } catch (error) {
+                        console.error("Errore durante l'importazione del file JSON:", error);
+                        alert(`Errore durante l'importazione: ${error.message}`);
+                    }
+                };
+                reader.onerror = () => {
+                    alert("Impossibile leggere il file selezionato.");
+                };
+                reader.readAsText(file);
+            };
+
+            const handleAiPlanner = async () => {
+                const promptText = aiPlannerPrompt.value;
+                if (!promptText.trim()) {
+                    alert("Per favore, descrivi la tua settimana.");
+                    return;
+                }
+
+                aiPlannerBtn.disabled = true;
+                aiPlannerBtnText.classList.add('hidden');
+                aiPlannerLoader.classList.remove('hidden');
+
+                const weekValue = weekSelector.value;
+                if (!weekValue) {
+                    alert("Seleziona una settimana per la pianificazione.");
+                    aiPlannerBtn.disabled = false;
+                    aiPlannerBtnText.classList.remove('hidden');
+                    aiPlannerLoader.classList.add('hidden');
+                    return;
+                }
+                const [year, week] = weekValue.split('-W').map(Number);
+                const { startOfWeek } = getWeekRangeFromISOWeek(year, week);
+
+                const systemPrompt = `You are a scheduling assistant. The user will provide their work plan for a week in natural language. Today's date is ${new Date().toLocaleDateString('it-IT')}. The week for planning starts on ${startOfWeek.toLocaleDateString('it-IT')}.
+                Your task is to convert this plan into a structured JSON array. Each object in the array represents a work shift.
+                - Infer the correct dates for the days mentioned (e.g., 'lunedì', 'martedì') based on the start date of the week.
+                - A 'morning' shift is from 08:00 to 14:00.
+                - An 'afternoon' shift is from 14:00 to 20:00.
+                - A 'full day' shift is from 08:00 to 12:00 and 14:00 to 18:00 (create two separate entries for this).
+                - The available locations are 'Borgo con Mila' and 'Monte due Torri'. If the user does not specify a location, default to 'Borgo con Mila'.
+                - Only output the JSON array.`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: promptText }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    date: { type: "STRING", description: "The date of the shift in YYYY-MM-DD format." },
+                                    location: { type: "STRING", description: "The work location, must be 'Borgo con Mila' or 'Monte due Torri'." },
+                                    plannedStartTime: { type: "STRING", description: "The shift start time in HH:MM format." },
+                                    plannedEndTime: { type: "STRING", description: "The shift end time in HH:MM format." }
+                                },
+                                required: ["date", "location", "plannedStartTime", "plannedEndTime"]
+                            }
+                        }
+                    }
+                };
+
+                try {
+                    const result = await callGemini(payload);
+                    const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!jsonText) throw new Error("Risposta vuota dall'IA.");
+                    
+                    const shifts = JSON.parse(jsonText);
+                    const updatedWorkData = { ...workData };
+
+                    for (const shift of shifts) {
+                        const plannedHours = calculateHours(shift.plannedStartTime, shift.plannedEndTime);
+                        updatedWorkData[shift.date] = {
+                            isWorkDay: true,
+                            location: shift.location,
+                            plannedStartTime: shift.plannedStartTime,
+                            plannedEndTime: shift.plannedEndTime,
+                            plannedHours: plannedHours,
+                            actualStartTime: '',
+                            actualEndTime: '',
+                            actualHours: 0
+                        };
+                    }
+
+                    const docRef = doc(db, "calendars", viewedUserId);
+                    await setDoc(docRef, { workData: updatedWorkData }, { merge: true });
+                    
+                    aiPlannerPrompt.value = ''; // Clear prompt
+                    alert('Pianificazione completata con successo!');
+
+                } catch (error) {
+                    console.error("Error with AI Planner:", error);
+                    alert("Si è verificato un errore durante la pianificazione. Riprova. Dettagli: " + error.message);
+                } finally {
+                    aiPlannerBtn.disabled = false;
+                    aiPlannerBtnText.classList.remove('hidden');
+                    aiPlannerLoader.classList.add('hidden');
+                }
+            };
+
+            const handleAiSummary = async () => {
+                aiSummaryContent.innerHTML = '<div class="flex justify-center items-center p-8"><div class="loader"></div></div>';
+                aiSummaryModal.classList.remove('hidden');
+
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                const monthName = monthNames[month];
+
+                const { summaries } = getExportDataForMonth(year, month);
+
+                const prompt = `Sei un assistente di produttività. Analizza i seguenti dati di lavoro per il mese di ${monthName} ${year}.
+                - Ore Pianificate Totali: ${summaries.mPlanned.toFixed(1)}
+                - Ore Effettive Totali: ${summaries.mActual.toFixed(1)}
+                - Ore di Straordinario: ${summaries.mOvertime.toFixed(1)}
+                - Dettaglio per 'Borgo con Mila': ${summaries.mPlannedBCM.toFixed(1)} ore pianificate, ${summaries.mActualBCM.toFixed(1)} ore effettive.
+                - Dettaglio per 'Monte due Torri': ${summaries.mPlannedMDT.toFixed(1)} ore pianificate, ${summaries.mActualMDT.toFixed(1)} ore effettive.
+
+                Fornisci un riepilogo conciso e incoraggiante in formato markdown. Inizia con un titolo H3.
+                Evidenzia i punti chiave (es. straordinari, differenza tra pianificato ed effettivo).
+                Concludi con un consiglio pratico e personalizzato per migliorare la gestione del tempo o il bilanciamento vita-lavoro basato sui dati forniti.`;
+                
+                 const payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+                try {
+                    const result = await callGemini(payload);
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if(!text) throw new Error("Nessun contenuto generato.");
+                    
+                    let htmlContent = text
+                        .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mb-2">$1</h3>')
+                        .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mb-3">$1</h2>')
+                        .replace(/^\* (.*$)/gim, '<li class="ml-4">$1</li>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br>');
+
+                    aiSummaryContent.innerHTML = htmlContent;
+                } catch(error) {
+                    console.error("Error with AI Summary:", error);
+                    aiSummaryContent.innerHTML = `<p class="text-red-500">Impossibile generare il riepilogo. Riprova più tardi.</p>`;
+                }
+            };
+            const initializeAppUI = () => {
+                prevMonthBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
+                nextMonthBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
+                closeModalBtn.addEventListener('click', closeModal);
+                modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+                entryForm.addEventListener('submit', saveEntry);
+                deleteBtn.addEventListener('click', () => {
+                    if (true) { 
+                       deleteEntry();
+                    }
+                });
+                dayTypeRadios.forEach(radio => radio.addEventListener('change', togglePlannedHoursVisibility));
+                weekSelector.addEventListener('input', updateWeeklySummaryFromSelector);
+                exportExcelBtn.addEventListener('click', exportToExcel);
+                exportPdfBtn.addEventListener('click', exportToPDF);
+                exportJsonBtn.addEventListener('click', exportToJSON);
+                importJsonBtn.addEventListener('click', importFromJSON);
+                copyUserIdBtn.addEventListener('click', () => {
+                    currentUserIdEl.select();
+                    document.execCommand('copy');
+                    copyUserIdBtn.textContent = 'Copiato!';
+                    setTimeout(() => { copyUserIdBtn.textContent = 'Copia'; }, 2000);
+                });
+                loadCollaboratorBtn.addEventListener('click', () => {
+                    const collaboratorId = collaboratorIdInput.value.trim();
+                    if (collaboratorId) {
+                        setupRealtimeListener(collaboratorId);
+                    } else {
+                        alert("Per favore, inserisci un ID utente valido.");
+                    }
+                });
+                const timeInputs = [plannedStartTimeInput, plannedEndTimeInput, actualStartTimeInput, actualEndTimeInput];
+                timeInputs.forEach(el => {
+                    el.addEventListener('input', updateTotalHoursDisplay);
+                    el.addEventListener('change', (e) => { e.target.value = snapTo30MinuteInterval(e.target.value); updateTotalHoursDisplay(); });
+                });
+                
+                // Gemini Listeners
+                aiPlannerBtn.addEventListener('click', handleAiPlanner);
+                aiSummaryBtn.addEventListener('click', handleAiSummary);
+                closeAiSummaryModalBtn.addEventListener('click', () => aiSummaryModal.classList.add('hidden'));
+                aiSummaryModal.addEventListener('click', (e) => { if (e.target === aiSummaryModal) aiSummaryModal.classList.add('hidden'); });
+
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = today.getMonth();
+                const week = getISOWeek(today);
+                weekSelector.value = `${year}-W${String(week).padStart(2, '0')}`;
+                exportMonthInput.value = `${year}-${String(month + 1).padStart(2, '0')}`;
+            };
+        });
+    </script>
+</body>
+</html>
+

@@ -67,28 +67,6 @@
             <p class="text-center text-gray-500">Pianifica e monitora le tue ore di lavoro con semplicità.</p>
         </div>
         
-        <!-- Sezione Condivisione -->
-        <div class="bg-white rounded-xl shadow-lg p-5 mb-8">
-            <h3 class="font-bold text-lg text-gray-700 mb-4">Condivisione e Collaborazione</h3>
-            <div class="grid md:grid-cols-2 gap-4 md:gap-6 items-start">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Il Tuo ID Utente Unico (da condividere)</label>
-                    <div class="flex">
-                        <input type="text" id="current-user-id" readonly class="w-full p-2 border border-gray-300 rounded-l-md bg-gray-100 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <button id="copy-user-id" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-r-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">Copia</button>
-                    </div>
-                </div>
-                <div>
-                    <label for="collaborator-id-input" class="block text-sm font-medium text-gray-700 mb-1">Carica Calendario di un Altro Utente</label>
-                    <div class="flex">
-                        <input type="text" id="collaborator-id-input" placeholder="Incolla ID utente qui..." class="w-full p-2 border border-gray-300 rounded-l-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <button id="load-collaborator-calendar" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">Carica</button>
-                    </div>
-                </div>
-            </div>
-            <p id="currently-viewing" class="text-center text-sm text-gray-500 mt-4"></p>
-        </div>
-        
         <!-- Sezione Pianificazione Intelligente -->
         <div class="bg-white rounded-xl shadow-lg p-5 mb-8">
             <h3 class="font-bold text-lg text-gray-700 mb-2">✨ Pianificazione Intelligente</h3>
@@ -112,6 +90,10 @@
             <div class="flex items-center">
                 <span class="w-4 h-4 rounded-full bg-orange-100 mr-2 border border-orange-200"></span>
                 <span>Monte due Torri</span>
+            </div>
+            <div class="flex items-center">
+                <span class="w-4 h-4 rounded-full bg-sky-100 mr-2 border border-sky-200"></span>
+                <span>Entrambe le Sedi</span>
             </div>
             <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -164,9 +146,7 @@
                  <div class="flex justify-between items-center mb-2">
                     <h3 class="font-bold text-lg text-gray-700">Riepilogo Mensile</h3>
                     <button id="ai-summary-btn" title="Genera Riepilogo Intelligente" class="p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clip-rule="evenodd" />
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" transform="rotate(45 10 10) scale(0.8)"/><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a8 8 0 1116 0 8 8 0 01-16 0z" /></svg>
                     </button>
                 </div>
                 <div class="flex justify-between items-center text-gray-600">
@@ -205,6 +185,17 @@
                             <div class="flex justify-between items-center mt-1 text-gray-600 text-xs pl-2">
                                 <span>Effettive:</span>
                                 <span id="monthly-actual-mdt" class="font-bold text-green-500">0.0</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="font-medium text-sky-700">Entrambe le Sedi</p>
+                            <div class="flex justify-between items-center text-gray-600 text-xs pl-2">
+                                <span>Pianificate:</span>
+                                <span id="monthly-planned-es" class="font-bold text-blue-500">0.0</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-1 text-gray-600 text-xs pl-2">
+                                <span>Effettive:</span>
+                                <span id="monthly-actual-es" class="font-bold text-green-500">0.0</span>
                             </div>
                         </div>
                     </div>
@@ -250,6 +241,17 @@
                                 <span id="weekly-actual-mdt" class="font-bold text-green-500">0.0</span>
                             </div>
                         </div>
+                        <div>
+                             <p class="font-medium text-sky-700">Entrambe le Sedi</p>
+                            <div class="flex justify-between items-center text-gray-600 text-xs pl-2">
+                                <span>Pianificate:</span>
+                                <span id="weekly-planned-es" class="font-bold text-blue-500">0.0</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-1 text-gray-600 text-xs pl-2">
+                                <span>Effettive:</span>
+                                <span id="weekly-actual-es" class="font-bold text-green-500">0.0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-4">
@@ -286,6 +288,28 @@
                 </div>
             </div>
         </div>
+
+        <!-- Sezione Condivisione -->
+        <div class="bg-white rounded-xl shadow-lg p-5 mt-6">
+            <h3 class="font-bold text-lg text-gray-700 mb-4">Condivisione e Collaborazione</h3>
+            <div class="grid md:grid-cols-2 gap-4 md:gap-6 items-start">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Il Tuo ID Utente Unico (da condividere)</label>
+                    <div class="flex">
+                        <input type="text" id="current-user-id" readonly class="w-full p-2 border border-gray-300 rounded-l-md bg-gray-100 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <button id="copy-user-id" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-r-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">Copia</button>
+                    </div>
+                </div>
+                <div>
+                    <label for="collaborator-id-input" class="block text-sm font-medium text-gray-700 mb-1">Carica Calendario di un Altro Utente</label>
+                    <div class="flex">
+                        <input type="text" id="collaborator-id-input" placeholder="Incolla ID utente qui..." class="w-full p-2 border border-gray-300 rounded-l-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <button id="load-collaborator-calendar" class="px-4 py-2 bg-gray-600 text-white font-medium rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">Carica</button>
+                    </div>
+                </div>
+            </div>
+            <p id="currently-viewing" class="text-center text-sm text-gray-500 mt-4"></p>
+        </div>
     </div>
     <!-- Modale per inserimento/modifica -->
     <div id="entry-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
@@ -309,6 +333,7 @@
                             <select id="location" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 <option>Borgo con Mila</option>
                                 <option>Monte due Torri</option>
+                                <option>Entrambe le Sedi</option>
                             </select>
                         </div>
                         <div class="mb-4">
@@ -375,18 +400,20 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        // --- Variabili di Configurazione Firebase (fornite dall'ambiente) ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDbr_cLxhNCNvgrQ3O5sRrEOZIsuaI6FmM",
-  authDomain: "workcalendar-a674c.firebaseapp.com",
-  projectId: "workcalendar-a674c",
-  storageBucket: "workcalendar-a674c.firebasestorage.app",
-  messagingSenderId: "48682250448",
-  appId: "1:48682250448:web:55c6649bc909bf38502ed5",
-  measurementId: "G-XDNQ79G4VG"
-};
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- CONFIGURAZIONE FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCwEsYPeM05c-pStlRm16n9UjN-v71i4nM",
+            authDomain: "test-766b3.firebaseapp.com",
+            projectId: "test-766b3",
+            storageBucket: "test-766b3.appspot.com", // CORRETTO!
+            messagingSenderId: "732686667162",
+            appId: "1:732686667162:web:4ad48461e0b0fb7e5ffe23",
+            measurementId: "G-VKPX8HKR7T"
+        };
+        // ----------------------------------------------------
 
         // --- Inizializzazione Firebase ---
         let app, auth, db;
@@ -398,8 +425,10 @@ const firebaseConfig = {
             firebaseInitialized = true;
         } catch (e) {
             console.error("Firebase initialization failed:", e);
-            document.body.innerHTML = '<div class="text-center p-8 text-red-500">Impossibile inizializzare l\'applicazione. Controlla la configurazione di Firebase.</div>';
+            // Mostra un errore dettagliato direttamente sulla pagina se l'inizializzazione fallisce
+            document.body.innerHTML = `<div class="p-8 text-center"><h1 class="text-2xl font-bold text-red-600">Errore di Inizializzazione Firebase</h1><p class="mt-2 text-gray-700">Impossibile avviare l'applicazione. Questo di solito è causato da un errore di copia-incolla nell'oggetto \`firebaseConfig\`.</p><p class="mt-4 text-left bg-red-50 p-4 rounded-lg font-mono text-sm text-red-800"><b>Dettagli Errore:</b><br>${e.message}</p><p class="mt-4 text-gray-600">Per favore, ricontrolla attentamente la configurazione nel file index.html e le impostazioni del tuo progetto Firebase.</p></div>`;
         }
+
         document.addEventListener('DOMContentLoaded', () => {
             if (!firebaseInitialized) {
                 return;
@@ -410,7 +439,7 @@ const firebaseConfig = {
             const prevMonthBtn = document.getElementById('prev-month');
             const nextMonthBtn = document.getElementById('next-month');
             
-            // Elementi Modale
+            // ... (il resto del codice DOM è identico) ...
             const modal = document.getElementById('entry-modal');
             const modalTitle = document.getElementById('modal-title');
             const closeModalBtn = document.getElementById('close-modal');
@@ -446,6 +475,10 @@ const firebaseConfig = {
             const weeklyActualBcmEl = document.getElementById('weekly-actual-bcm');
             const weeklyPlannedMdtEl = document.getElementById('weekly-planned-mdt');
             const weeklyActualMdtEl = document.getElementById('weekly-actual-mdt');
+            const monthlyPlannedEsEl = document.getElementById('monthly-planned-es');
+            const monthlyActualEsEl = document.getElementById('monthly-actual-es');
+            const weeklyPlannedEsEl = document.getElementById('weekly-planned-es');
+            const weeklyActualEsEl = document.getElementById('weekly-actual-es');
             // Esportazione
             const exportMonthInput = document.getElementById('export-month');
             const exportExcelBtn = document.getElementById('export-excel');
@@ -473,15 +506,16 @@ const firebaseConfig = {
 
             // Stato dell'applicazione
             let currentDate = new Date();
-            let workData = {}; // I dati ora verranno da Firestore
-            let currentUserId = null; // L'ID dell'utente autenticato
-            let viewedUserId = null; // L'ID dell'utente il cui calendario stiamo visualizzando
-            let unsubscribe; // Per staccare il listener di Firestore
+            let workData = {};
+            let currentUserId = null;
+            let viewedUserId = null;
+            let unsubscribe;
+            let uiInitialized = false;
             const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
             
-            // --- Gemini API Helper ---
-            const apiKey = ""; // Canvas will provide this
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            // --- Gemini API Helper (Richiede la tua chiave API se non fornita dall'ambiente) ---
+            const geminiApiKey = ""; // Inserisci la tua chiave API Gemini qui se necessario
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
 
             async function callGemini(payload, retries = 3, delay = 1000) {
                 for (let i = 0; i < retries; i++) {
@@ -501,7 +535,7 @@ const firebaseConfig = {
                         if (i < retries - 1) {
                             await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
                         } else {
-                           throw error; // Rethrow the last error
+                           throw error;
                         }
                     }
                 }
@@ -512,32 +546,31 @@ const firebaseConfig = {
                 if (user) {
                     currentUserId = user.uid;
                     currentUserIdEl.value = currentUserId;
-                    viewedUserId = currentUserId;
-                    setupRealtimeListener(currentUserId);
-                    initializeAppUI();
+                    if (!viewedUserId) {
+                         viewedUserId = currentUserId;
+                         setupRealtimeListener(currentUserId);
+                    }
+                    if(!uiInitialized) {
+                        initializeAppUI();
+                        uiInitialized = true;
+                    }
                 } else {
                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
+                        await signInAnonymously(auth);
                     } catch (error) {
                         console.error("Authentication failed:", error);
-                        currentlyViewingEl.textContent = "Autenticazione fallita. Ricarica la pagina.";
+                        // Mostra un errore di autenticazione più specifico
+                        currentlyViewingEl.textContent = `Autenticazione fallita: ${error.code}. Controlla i domini autorizzati e che l'accesso anonimo sia attivo su Firebase.`;
                     }
                 }
             });
             
-            /**
-             * Imposta il listener di Firestore per i dati del calendario in tempo reale.
-             */
             const setupRealtimeListener = (userIdToView) => {
                 if (unsubscribe) {
-                    unsubscribe(); // Rimuove il listener precedente
+                    unsubscribe();
                 }
                 viewedUserId = userIdToView;
-                const docRef = doc(db, `artifacts/${appId}/public/data/calendars`, viewedUserId);
+                const docRef = doc(db, "calendars", viewedUserId);
                 if (viewedUserId === currentUserId) {
                     currentlyViewingEl.textContent = "Stai visualizzando il tuo calendario.";
                 } else {
@@ -547,19 +580,15 @@ const firebaseConfig = {
                     if (docSnap.exists()) {
                         workData = docSnap.data().workData || {};
                     } else {
-                        // Il documento non esiste, inizializza i dati vuoti
                         workData = {};
-                        console.log("Nessun dato trovato per questo utente, verrà creato un nuovo documento al primo salvataggio.");
                     }
                     renderCalendar();
                 }, (error) => {
                     console.error("Errore nel listener di Firestore: ", error);
-                    currentlyViewingEl.textContent = "Errore nel caricamento dei dati.";
+                    currentlyViewingEl.textContent = `Errore di Firestore: ${error.code}. Controlla le regole del database.`;
                 });
             };
-             /**
-             * Calcola la differenza in ore tra due orari in formato HH:mm
-             */
+
             const calculateHours = (start, end) => {
                 if (!start || !end) return 0;
                 try {
@@ -569,11 +598,10 @@ const firebaseConfig = {
                     let endTimeInMinutes = endHour * 60 + endMinute;
                     
                     if (endTimeInMinutes < startTimeInMinutes) {
-                        endTimeInMinutes += 24 * 60; // Aggiungi 24 ore in minuti
+                        endTimeInMinutes += 24 * 60;
                     }
                     return (endTimeInMinutes - startTimeInMinutes) / 60;
                 } catch (e) {
-                    console.error("Error parsing time:", start, end);
                     return 0;
                 }
             };
@@ -612,8 +640,18 @@ const firebaseConfig = {
                     if (entry) {
                         dayEl.classList.remove('hover:bg-gray-100');
                         if (entry.isWorkDay) {
-                           dayEl.classList.add(entry.location === 'Borgo con Mila' ? 'bg-green-100' : 'bg-orange-100');
-                           const locationShort = entry.location === 'Borgo con Mila' ? 'BCM' : 'MDT';
+                           let locationShort;
+                           if (entry.location === 'Borgo con Mila') {
+                                dayEl.classList.add('bg-green-100');
+                                locationShort = 'Borgo';
+                           } else if (entry.location === 'Monte due Torri') {
+                                dayEl.classList.add('bg-orange-100');
+                                locationShort = 'Monte';
+                           } else if (entry.location === 'Entrambe le Sedi') {
+                                dayEl.classList.add('bg-sky-100');
+                                locationShort = 'B&M';
+                           }
+                           
                            dayDetails += `<div class="space-y-1 text-gray-600 flex-grow text-[10px] sm:text-xs"><div class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full text-center font-semibold text-[9px] sm:text-[10px]">${locationShort}</div>`;
                             if (entry.plannedHours > 0) {
                                 dayDetails += `<div class="text-blue-600">P: ${entry.plannedStartTime}-${entry.plannedEndTime} <strong>(${entry.plannedHours.toFixed(1)}h)</strong></div>`;
@@ -710,8 +748,7 @@ const firebaseConfig = {
                 }
                 
                 try {
-                    const docRef = doc(db, `artifacts/${appId}/public/data/calendars`, viewedUserId);
-                    // Usiamo `setDoc` con `merge: true` per aggiornare/creare il documento e il campo specifico
+                    const docRef = doc(db, "calendars", viewedUserId);
                     await setDoc(docRef, { workData: { ...workData, ...newEntryData } }, { merge: true });
                 } catch (error) {
                     console.error("Errore nel salvataggio dei dati su Firestore: ", error);
@@ -723,13 +760,11 @@ const firebaseConfig = {
             
             const deleteEntry = async () => {
                 const dateStr = selectedDateInput.value;
-                
-                // Crea una copia di workData senza la chiave da eliminare
                 const updatedWorkData = { ...workData };
                 delete updatedWorkData[dateStr];
                 try {
-                    const docRef = doc(db, `artifacts/${appId}/public/data/calendars`, viewedUserId);
-                    await setDoc(docRef, { workData: updatedWorkData }); // Sovrascrive l'intero oggetto workData
+                    const docRef = doc(db, "calendars", viewedUserId);
+                    await setDoc(docRef, { workData: updatedWorkData });
                 } catch (error) {
                     console.error("Errore nell'eliminazione dei dati su Firestore: ", error);
                     alert("Impossibile eliminare i dati. Controlla la connessione e riprova.");
@@ -751,7 +786,7 @@ const firebaseConfig = {
                 const year = currentDate.getFullYear();
                 const month = currentDate.getMonth();
                 
-                let mPlanned = 0, mActual = 0, mPlannedBCM = 0, mActualBCM = 0, mPlannedMDT = 0, mActualMDT = 0;
+                let mPlanned = 0, mActual = 0, mPlannedBCM = 0, mActualBCM = 0, mPlannedMDT = 0, mActualMDT = 0, mPlannedES = 0, mActualES = 0;
                 Object.keys(workData).forEach(dateStr => {
                     const entryDate = new Date(dateStr + 'T00:00:00');
                     if(entryDate.getFullYear() === year && entryDate.getMonth() === month) {
@@ -761,6 +796,7 @@ const firebaseConfig = {
                            mActual += entry.actualHours || 0;
                            if (entry.location === 'Borgo con Mila') { mPlannedBCM += entry.plannedHours || 0; mActualBCM += entry.actualHours || 0; } 
                            else if (entry.location === 'Monte due Torri') { mPlannedMDT += entry.plannedHours || 0; mActualMDT += entry.actualHours || 0; }
+                           else if (entry.location === 'Entrambe le Sedi') { mPlannedES += entry.plannedHours || 0; mActualES += entry.actualHours || 0; }
                         }
                     }
                 });
@@ -772,15 +808,17 @@ const firebaseConfig = {
                 monthlyActualBcmEl.textContent = mActualBCM.toFixed(1);
                 monthlyPlannedMdtEl.textContent = mPlannedMDT.toFixed(1);
                 monthlyActualMdtEl.textContent = mActualMDT.toFixed(1);
+                monthlyPlannedEsEl.textContent = mPlannedES.toFixed(1);
+                monthlyActualEsEl.textContent = mActualES.toFixed(1);
                 updateWeeklySummaryFromSelector();
             };
             const updateWeeklySummaryFromSelector = () => {
                 const weekValue = weekSelector.value;
-                if (!weekValue) { /* reset weekly values */ return; }
+                if (!weekValue) { return; }
                 const [year, week] = weekValue.split('-W').map(Number);
                 const { startOfWeek, endOfWeek } = getWeekRangeFromISOWeek(year, week);
                 
-                let wPlanned = 0, wActual = 0, wPlannedBCM = 0, wActualBCM = 0, wPlannedMDT = 0, wActualMDT = 0;
+                let wPlanned = 0, wActual = 0, wPlannedBCM = 0, wActualBCM = 0, wPlannedMDT = 0, wActualMDT = 0, wPlannedES = 0, wActualES = 0;
                  for (let d = new Date(startOfWeek); d <= endOfWeek; d.setDate(d.getDate() + 1)) {
                     const currentDayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                     const entry = workData[currentDayStr];
@@ -789,6 +827,7 @@ const firebaseConfig = {
                         wActual += entry.actualHours || 0;
                         if (entry.location === 'Borgo con Mila') { wPlannedBCM += entry.plannedHours || 0; wActualBCM += entry.actualHours || 0; } 
                         else if (entry.location === 'Monte due Torri') { wPlannedMDT += entry.plannedHours || 0; wActualMDT += entry.actualHours || 0; }
+                        else if (entry.location === 'Entrambe le Sedi') { wPlannedES += entry.plannedHours || 0; wActualES += entry.actualHours || 0; }
                     }
                  }
                 weeklyPlannedEl.textContent = wPlanned.toFixed(1);
@@ -798,6 +837,8 @@ const firebaseConfig = {
                 weeklyActualBcmEl.textContent = wActualBCM.toFixed(1);
                 weeklyPlannedMdtEl.textContent = wPlannedMDT.toFixed(1);
                 weeklyActualMdtEl.textContent = wActualMDT.toFixed(1);
+                weeklyPlannedEsEl.textContent = wPlannedES.toFixed(1);
+                weeklyActualEsEl.textContent = wActualES.toFixed(1);
             };
             const getWeekRangeFromISOWeek = (year, week) => {
                 const d = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
@@ -832,7 +873,7 @@ const firebaseConfig = {
             };
             
             const getExportDataForMonth = (year, month) => {
-                let mPlanned = 0, mActual = 0, mPlannedBCM = 0, mActualBCM = 0, mPlannedMDT = 0, mActualMDT = 0;
+                let mPlanned = 0, mActual = 0, mPlannedBCM = 0, mActualBCM = 0, mPlannedMDT = 0, mActualMDT = 0, mPlannedES = 0, mActualES = 0;
                 const tableData = [];
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
                 for (let day = 1; day <= daysInMonth; day++) {
@@ -854,12 +895,13 @@ const firebaseConfig = {
                            mPlanned += entry.plannedHours || 0; mActual += entry.actualHours || 0;
                            if (entry.location === 'Borgo con Mila') { mPlannedBCM += entry.plannedHours || 0; mActualBCM += entry.actualHours || 0; } 
                            else if (entry.location === 'Monte due Torri') { mPlannedMDT += entry.plannedHours || 0; mActualMDT += entry.actualHours || 0; }
+                           else if (entry.location === 'Entrambe le Sedi') { mPlannedES += entry.plannedHours || 0; mActualES += entry.actualHours || 0; }
                         } else { row["Tipo"] = "Riposo"; }
                     }
                     tableData.push(row);
                 }
                 const mOvertime = Math.max(0, mActual - mPlanned);
-                const summaries = { mPlanned, mActual, mOvertime, mPlannedBCM, mActualBCM, mPlannedMDT, mActualMDT };
+                const summaries = { mPlanned, mActual, mOvertime, mPlannedBCM, mActualBCM, mPlannedMDT, mActualMDT, mPlannedES, mActualES };
                 return { tableData, summaries };
             };
             
@@ -875,11 +917,11 @@ const firebaseConfig = {
                 doc.text(`Riepilogo Lavorativo - ${monthNames[month - 1]} ${year}`, 14, 22);
                 doc.setFontSize(11);
                 doc.setTextColor(100);
-                const summaryText = `Riepilogo Totale:\n- Ore Pianificate: ${summaries.mPlanned.toFixed(1)}\n- Ore Effettive: ${summaries.mActual.toFixed(1)}\n- Straordinari: ${summaries.mOvertime.toFixed(1)}\n\nDettaglio Sedi:\n- Borgo con Mila:\n    - Pianificate: ${summaries.mPlannedBCM.toFixed(1)}\n    - Effettive: ${summaries.mActualBCM.toFixed(1)}\n- Monte due Torri:\n    - Pianificate: ${summaries.mPlannedMDT.toFixed(1)}\n    - Effettive: ${summaries.mActualMDT.toFixed(1)}`;
+                const summaryText = `Riepilogo Totale:\n- Ore Pianificate: ${summaries.mPlanned.toFixed(1)}\n- Ore Effettive: ${summaries.mActual.toFixed(1)}\n- Straordinari: ${summaries.mOvertime.toFixed(1)}\n\nDettaglio Sedi:\n- Borgo con Mila:\n    - Pianificate: ${summaries.mPlannedBCM.toFixed(1)}\n    - Effettive: ${summaries.mActualBCM.toFixed(1)}\n- Monte due Torri:\n    - Pianificate: ${summaries.mPlannedMDT.toFixed(1)}\n    - Effettive: ${summaries.mActualMDT.toFixed(1)}\n- Entrambe le Sedi:\n    - Pianificate: ${summaries.mPlannedES.toFixed(1)}\n    - Effettive: ${summaries.mActualES.toFixed(1)}`;
                 doc.text(summaryText, 14, 32);
                 const head = [["Data", "Giorno", "Tipo", "Sede", "Pianificato", "Ore P.", "Effettivo", "Ore E."]];
                 const body = tableData.map(r => [r.Data, r.Giorno, r.Tipo, r.Sede, r["Orario Pianificato"], r["Ore Pianificate"].toFixed(1), r["Orario Effettivo"], r["Ore Effettive"].toFixed(1)]);
-                doc.autoTable({ head, body, startY: 85, theme: 'striped', headStyles: { fillColor: [41, 128, 185] } });
+                doc.autoTable({ head, body, startY: 95, theme: 'striped', headStyles: { fillColor: [41, 128, 185] } });
                 doc.save(`Riepilogo_${monthNames[month-1]}_${year}.pdf`);
             };
              const exportToExcel = () => {
@@ -897,7 +939,9 @@ const firebaseConfig = {
                 XLSX.utils.sheet_add_aoa(ws, [["Borgo con Mila (Eff.)", summaries.mActualBCM.toFixed(1)]], { origin: "D5" });
                 XLSX.utils.sheet_add_aoa(ws, [["Monte due Torri (Pian.)", summaries.mPlannedMDT.toFixed(1)]], { origin: "D6" });
                 XLSX.utils.sheet_add_aoa(ws, [["Monte due Torri (Eff.)", summaries.mActualMDT.toFixed(1)]], { origin: "D7" });
-                XLSX.utils.sheet_add_json(ws, tableData, { origin: "A10" });
+                XLSX.utils.sheet_add_aoa(ws, [["Entrambe le Sedi (Pian.)", summaries.mPlannedES.toFixed(1)]], { origin: "D8" });
+                XLSX.utils.sheet_add_aoa(ws, [["Entrambe le Sedi (Eff.)", summaries.mActualES.toFixed(1)]], { origin: "D9" });
+                XLSX.utils.sheet_add_json(ws, tableData, { origin: "A12" });
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Riepilogo Mensile");
                 XLSX.writeFile(wb, `Riepilogo_${monthNames[month-1]}_${year}.xlsx`);
@@ -908,7 +952,7 @@ const firebaseConfig = {
                     alert("Non ci sono dati da esportare.");
                     return;
                 }
-                const dataStr = JSON.stringify(workData, null, 2); // Pretty print
+                const dataStr = JSON.stringify(workData, null, 2);
                 const dataBlob = new Blob([dataStr], {type: "application/json"});
                 const url = URL.createObjectURL(dataBlob);
                 const link = document.createElement('a');
@@ -934,9 +978,9 @@ const firebaseConfig = {
                         if (typeof importedData !== 'object' || importedData === null || Array.isArray(importedData)) {
                             throw new Error("Il file non contiene dati validi.");
                         }
-                        const docRef = doc(db, `artifacts/${appId}/public/data/calendars`, viewedUserId);
+                        const docRef = doc(db, "calendars", viewedUserId);
                         await setDoc(docRef, { workData: importedData });
-                        importFileInput.value = ''; // Reset input
+                        importFileInput.value = '';
                         alert("Dati importati con successo! Il calendario si aggiornerà a breve.");
                     } catch (error) {
                         console.error("Errore durante l'importazione del file JSON:", error);
@@ -977,7 +1021,7 @@ const firebaseConfig = {
                 - A 'morning' shift is from 08:00 to 14:00.
                 - An 'afternoon' shift is from 14:00 to 20:00.
                 - A 'full day' shift is from 08:00 to 12:00 and 14:00 to 18:00 (create two separate entries for this).
-                - The available locations are 'Borgo con Mila' and 'Monte due Torri'. If the user does not specify a location, default to 'Borgo con Mila'.
+                - The available locations are 'Borgo con Mila', 'Monte due Torri', and 'Entrambe le Sedi'. If the user does not specify a location, default to 'Borgo con Mila'.
                 - Only output the JSON array.`;
 
                 const payload = {
@@ -991,7 +1035,7 @@ const firebaseConfig = {
                                 type: "OBJECT",
                                 properties: {
                                     date: { type: "STRING", description: "The date of the shift in YYYY-MM-DD format." },
-                                    location: { type: "STRING", description: "The work location, must be 'Borgo con Mila' or 'Monte due Torri'." },
+                                    location: { type: "STRING", description: "The work location, must be 'Borgo con Mila', 'Monte due Torri', or 'Entrambe le Sedi'." },
                                     plannedStartTime: { type: "STRING", description: "The shift start time in HH:MM format." },
                                     plannedEndTime: { type: "STRING", description: "The shift end time in HH:MM format." }
                                 },
@@ -1023,7 +1067,7 @@ const firebaseConfig = {
                         };
                     }
 
-                    const docRef = doc(db, `artifacts/${appId}/public/data/calendars`, viewedUserId);
+                    const docRef = doc(db, "calendars", viewedUserId);
                     await setDoc(docRef, { workData: updatedWorkData }, { merge: true });
                     
                     aiPlannerPrompt.value = ''; // Clear prompt
@@ -1055,6 +1099,7 @@ const firebaseConfig = {
                 - Ore di Straordinario: ${summaries.mOvertime.toFixed(1)}
                 - Dettaglio per 'Borgo con Mila': ${summaries.mPlannedBCM.toFixed(1)} ore pianificate, ${summaries.mActualBCM.toFixed(1)} ore effettive.
                 - Dettaglio per 'Monte due Torri': ${summaries.mPlannedMDT.toFixed(1)} ore pianificate, ${summaries.mActualMDT.toFixed(1)} ore effettive.
+                - Dettaglio per 'Entrambe le Sedi': ${summaries.mPlannedES.toFixed(1)} ore pianificate, ${summaries.mActualES.toFixed(1)} ore effettive.
 
                 Fornisci un riepilogo conciso e incoraggiante in formato markdown. Inizia con un titolo H3.
                 Evidenzia i punti chiave (es. straordinari, differenza tra pianificato ed effettivo).
@@ -1067,7 +1112,6 @@ const firebaseConfig = {
                     const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
                     if(!text) throw new Error("Nessun contenuto generato.");
                     
-                    // Basic Markdown to HTML conversion
                     let htmlContent = text
                         .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold mb-2">$1</h3>')
                         .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold mb-3">$1</h2>')
@@ -1088,8 +1132,7 @@ const firebaseConfig = {
                 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
                 entryForm.addEventListener('submit', saveEntry);
                 deleteBtn.addEventListener('click', () => {
-                    // Replaced confirm with a simpler alert for iframe compatibility. In a real app, a custom modal is better.
-                    if (true) { // Automatically confirm for now
+                    if (true) { 
                        deleteEntry();
                     }
                 });
@@ -1136,6 +1179,4 @@ const firebaseConfig = {
     </script>
 </body>
 </html>
-
-
 

@@ -127,17 +127,7 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
             </div>
-            <!-- Giorni della settimana -->
-            <div class="calendar-grid mb-2">
-                <div class="text-center font-semibold text-gray-500 text-xs">L</div>
-                <div class="text-center font-semibold text-gray-500 text-xs">M</div>
-                <div class="text-center font-semibold text-gray-500 text-xs">M</div>
-                <div class="text-center font-semibold text-gray-500 text-xs">G</div>
-                <div class="text-center font-semibold text-gray-500 text-xs">V</div>
-                <div class="text-center font-semibold text-gray-500 text-xs">S</div>
-                <div class="text-center font-semibold text-gray-500 text-xs">D</div>
-            </div>
-            <!-- Griglia Calendario -->
+            <!-- Griglia Calendario (ora include gli header) -->
             <div id="calendar-grid" class="calendar-grid"></div>
         </div>
         <!-- Sezione Riepiloghi -->
@@ -514,7 +504,7 @@
             const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
             
             // --- Gemini API Helper (Richiede la tua chiave API se non fornita dall'ambiente) ---
-            const geminiApiKey = "AIzaSyCF17h53ruoImphNYtMvRxEs1Ib049qiwE"; // Inserisci la tua chiave API Gemini qui se necessario
+            const geminiApiKey = "AIzaSyCFa-ZzU_YtMvRxEs1Ib049qiwE"; // Inserisci la tua chiave API Gemini qui se necessario
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
 
             async function callGemini(payload, retries = 3, delay = 1000) {
@@ -612,6 +602,16 @@
                 const year = currentDate.getFullYear();
                 const month = currentDate.getMonth();
                 monthYearEl.textContent = `${monthNames[month]} ${year}`;
+
+                // Aggiungo gli header dei giorni dinamicamente all'interno della griglia principale
+                const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+                daysOfWeek.forEach(day => {
+                    const headerEl = document.createElement('div');
+                    headerEl.className = 'text-center font-semibold text-gray-500 text-xs py-2';
+                    headerEl.textContent = day;
+                    calendarGrid.appendChild(headerEl);
+                });
+
                 const firstDayOfMonth = new Date(year, month, 1);
                 const lastDayOfMonth = new Date(year, month + 1, 0);
                 const daysInMonth = lastDayOfMonth.getDate();
@@ -643,10 +643,10 @@
                            let locationShort;
                            if (entry.location === 'Borgo con Mila') {
                                 dayEl.classList.add('bg-green-100');
-                                locationShort = 'Borgo';
+                                locationShort = 'Bor';
                            } else if (entry.location === 'Monte due Torri') {
                                 dayEl.classList.add('bg-orange-100');
-                                locationShort = 'Monte';
+                                locationShort = 'Mon';
                            } else if (entry.location === 'Entrambe le Sedi') {
                                 dayEl.classList.add('bg-sky-100');
                                 locationShort = 'B&M';
